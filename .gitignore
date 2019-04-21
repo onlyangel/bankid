@@ -1,0 +1,11 @@
+# Ignore these local directories
+*.tar.gz
+.DS_Store
+*.pdf
+service
+vendor/*
+usemodules.sh
+rp/*
+
+# Temporary ban
+bankid_test.go
