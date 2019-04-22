@@ -1,6 +1,12 @@
-# Bank ID API
+# BankID API
 
+This little module helps with BankID integrations. 
 
+TODO: Signing
+
+## Authentication flow
+
+![BankID Authentication flow](auth_flow.png)
 
 # License 
 
