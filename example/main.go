@@ -1,14 +1,3 @@
-# BankID API
-
-This little module helps with BankID integrations. 
-
-## Authentication flow
-
-![BankID Authentication flow](auth_flow.png)
-
-Example in the `./example/` directory demonstrates using the BankID app on another device.
-
-```golang
 package main
 
 import (
@@ -110,29 +99,3 @@ func main() {
 		log.Printf(" >> Auth cancelled\n")
 	}
 }
-```
-
-For signing data, use the `bankid.Sign()` method instead of the `bankid.Auth()` method. The flow is the same. 
-
-# License 
-
-MIT License
-Copyright (c) 2019 Joakim Fernstad
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
