@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"strings"
 )
@@ -21,22 +22,6 @@ const (
 	CancelEndpoint    string = "/cancel"
 )
 
-// HintCodes - for Pending and Failed statuses
-const (
-	PendOutstandingTransaction = "outstandingTransaction"
-	PendNoClient               = "noClient"
-	PendStarted                = "started"
-	PendUserSign               = "userSign"
-	// PendUnknown
-
-	FailExpiredTransaction = "expiredTransaction"
-	FailCertificateErr     = "certificateErr"
-	FailUserCancel         = "userCancel"
-	FailCancelled          = "cancelled"
-	FailStartFailed        = "startFailed"
-	// FailUnknown
-)
-
 // Environmenter  ¯\_(ツ)_/¯
 // Helps setup requests to the BankID API
 type Environmenter interface {
@@ -47,27 +32,6 @@ type Environmenter interface {
 type environment struct {
 	baseURL      string
 	clientConfig *tls.Config
-}
-
-// Request - A basic BankID request contain one or more of the variables below
-type Request struct {
-	OrderRef           string `json:"orderRef,omitempty"`
-	EndUserIP          string `json:"endUserIp,omitempty"`
-	PersonalNumber     string `json:"personalNumber,omitempty"`
-	UserVisibleData    string `json:"userVisibleData,omitempty"`
-	UserNonVisibleData string `json:"userNonVisibleData,omitempty"`
-}
-
-// Response - for Auth and Sign requests
-type Response struct {
-	AutoStartToken string `json:"autoStartToken"` // UUID, e.g "dbbee61c-357b-4fd8-b103-392eed10be7a"
-	OrderRef       string `json:"orderRef"`       // UUID, e.g "131daac9-16c6-4618-beb0-365768f37288"
-}
-
-// ErrorResponse - when anything goes bad
-type ErrorResponse struct {
-	ErrorCode string `json:"errorCode"`
-	Details   string `json:"details"`
 }
 
 // NewEnvironment - sets up the certificates and URLs needed to identify ourselves with the BankID service
@@ -107,7 +71,7 @@ func (e *environment) NewRequest(endpoint string, body interface{}) (*http.Reque
 		return nil, err
 	}
 
-	fmt.Printf("New request to >> %s << with body: %s\n", endpoint, string(requestBody))
+	log.Printf("New request to >> %s << with body: %s\n", endpoint, string(requestBody))
 
 	bodyReader := strings.NewReader(string(requestBody))
 	req, err := http.NewRequest("POST", e.baseURL+APIVersion+endpoint, bodyReader)

@@ -4,7 +4,12 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"log"
+	"net/http"
 )
+
+// Use this to parse the BankID API response, see stdResponseParser
+type responseParser func(*http.Response) (interface{}, error)
 
 // Sign - besides personalNumber and userIP inputs as
 // the Auth() call we also need data to sign.
@@ -45,16 +50,40 @@ func Sign(env Environmenter, personalNumber string, userIP string, userVisible s
 		UserVisibleData:    userVisible,
 		UserNonVisibleData: userNonVisible,
 	}
-	return call(SignEndpoint, env, &requestBody)
+
+	output := &Response{}
+	rsp, err := call(SignEndpoint, env, &requestBody, stdResponseParser)
+	if err == nil {
+		output = rsp.(*Response)
+	}
+	return output, err
 }
 
-// Auth - verify a users' identitys
+// Auth - verify a users identity
 func Auth(env Environmenter, personalNumber string, userIP string) (*Response, error) {
 	requestBody := Request{
 		PersonalNumber: personalNumber,
 		EndUserIP:      userIP,
 	}
-	return call(AuthEndpoint, env, &requestBody)
+	output := &Response{}
+	rsp, err := call(AuthEndpoint, env, &requestBody, stdResponseParser)
+	if err == nil {
+		output = rsp.(*Response)
+	}
+	return output, err
+}
+
+func Collect(env Environmenter, orderRef string) (*CollectResponse, error) {
+	requestBody := Request{
+		OrderRef: orderRef,
+	}
+
+	output := &CollectResponse{}
+	rsp, err := call(CollectEndpoint, env, &requestBody, collectParser)
+	if err == nil {
+		output = rsp.(*CollectResponse)
+	}
+	return output, err
 }
 
 // Cancel -
@@ -62,10 +91,15 @@ func Cancel(env Environmenter, orderRef string) (*Response, error) {
 	requestBody := Request{
 		OrderRef: orderRef,
 	}
-	return call(CancelEndpoint, env, &requestBody)
+	output := &Response{}
+	rsp, err := call(CancelEndpoint, env, &requestBody, stdResponseParser)
+	if err == nil {
+		output = rsp.(*Response)
+	}
+	return output, err
 }
 
-func call(endpoint string, env Environmenter, requestBody *Request) (*Response, error) {
+func call(endpoint string, env Environmenter, requestBody *Request, rspParser responseParser) (interface{}, error) {
 
 	req, err := env.NewRequest(endpoint, requestBody)
 	if err != nil {
@@ -79,14 +113,62 @@ func call(endpoint string, env Environmenter, requestBody *Request) (*Response, 
 		return nil, err
 	}
 
+	return rspParser(rsp)
+}
+
+func stdResponseParser(rsp *http.Response) (interface{}, error) {
 	defer rsp.Body.Close()
 
-	authRsp := Response{}
+	log.Printf("Response code: %s\n", rsp.Status)
 
-	if err := json.NewDecoder(rsp.Body).Decode(&authRsp); err != nil {
-		return nil, fmt.Errorf("could not decode response: %s", err.Error())
+	// OK
+	if rsp.StatusCode >= 200 && rsp.StatusCode < 400 {
+		authRsp := Response{}
+		err := json.NewDecoder(rsp.Body).Decode(&authRsp)
+		if err != nil {
+			panic(fmt.Sprintf("failed to parse successful response: %s", err.Error()))
+		}
+		return &authRsp, nil
 	}
-	// TODO: Handle HTTP 4xx response
 
-	return &authRsp, nil
+	// Fail
+	if rsp.StatusCode >= 400 {
+		errRsp := ErrorResponse{}
+		err := json.NewDecoder(rsp.Body).Decode(&errRsp)
+		if err != nil {
+			panic(fmt.Sprintf("failed to parse fail response: %s", err.Error()))
+		}
+		return nil, errRsp // A bit unorthodox but ErrorResponse is a proper error type
+	}
+
+	// We don't care about HTTP 1xx messages
+	return nil, nil
+}
+
+func collectParser(rsp *http.Response) (interface{}, error) {
+	defer rsp.Body.Close()
+
+	log.Printf("Response code: %s\n", rsp.Status)
+
+	// OK
+	if rsp.StatusCode >= 200 && rsp.StatusCode < 400 {
+		collectRsp := CollectResponse{}
+		err := json.NewDecoder(rsp.Body).Decode(&collectRsp)
+		if err != nil {
+			panic(fmt.Sprintf("failed to parse successful response: %s", err.Error()))
+		}
+		return &collectRsp, nil
+	}
+
+	// Fail
+	if rsp.StatusCode >= 400 {
+		errRsp := ErrorResponse{}
+		err := json.NewDecoder(rsp.Body).Decode(&errRsp)
+		if err != nil {
+			panic(fmt.Sprintf("failed to parse fail response: %s", err.Error()))
+		}
+		return nil, errRsp // A bit unorthodox but ErrorResponse is a proper error type
+	}
+	// We don't care about HTTP 1xx messages
+	return nil, nil
 }
