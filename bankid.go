@@ -10,6 +10,7 @@ import (
 	"strings"
 )
 
+// API Constants
 const (
 	ProductionBaseURL string = "https://appapi2.bankid.com"
 	TestBaseURL       string = "https://appapi2.test.bankid.com"
@@ -18,6 +19,22 @@ const (
 	SignEndpoint      string = "/sign"
 	CollectEndpoint   string = "/collect"
 	CancelEndpoint    string = "/cancel"
+)
+
+// HintCodes - for Pending and Failed statuses
+const (
+	PendOutstandingTransaction = "outstandingTransaction"
+	PendNoClient               = "noClient"
+	PendStarted                = "started"
+	PendUserSign               = "userSign"
+	// PendUnknown
+
+	FailExpiredTransaction = "expiredTransaction"
+	FailCertificateErr     = "certificateErr"
+	FailUserCancel         = "userCancel"
+	FailCancelled          = "cancelled"
+	FailStartFailed        = "startFailed"
+	// FailUnknown
 )
 
 // Environmenter  ¯\_(ツ)_/¯
