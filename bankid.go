@@ -58,6 +58,19 @@ type Request struct {
 	UserNonVisibleData string `json:"userNonVisibleData,omitempty"`
 }
 
+// Response - for Auth and Sign requests
+type Response struct {
+	AutoStartToken string `json:"autoStartToken"` // UUID, e.g "dbbee61c-357b-4fd8-b103-392eed10be7a"
+	OrderRef       string `json:"orderRef"`       // UUID, e.g "131daac9-16c6-4618-beb0-365768f37288"
+}
+
+// ErrorResponse - when anything goes bad
+type ErrorResponse struct {
+	ErrorCode string `json:"errorCode"`
+	Details   string `json:"details"`
+}
+
+// NewEnvironment - sets up the certificates and URLs needed to identify ourselves with the BankID service
 func NewEnvironment(baseURL string, caPath string, rpCertPath string, rpKeyPath string) (*environment, error) {
 	ca, err := ioutil.ReadFile(caPath)
 	if err != nil {
@@ -87,6 +100,7 @@ func NewEnvironment(baseURL string, caPath string, rpCertPath string, rpKeyPath 
 	}, nil
 }
 
+// NewRequest - helper function to bake a request
 func (e *environment) NewRequest(endpoint string, body interface{}) (*http.Request, error) {
 	requestBody, err := json.Marshal(body)
 	if err != nil {
@@ -105,6 +119,7 @@ func (e *environment) NewRequest(endpoint string, body interface{}) (*http.Reque
 	return req, nil
 }
 
+// NewRequest - helper function to bake a new http.Client with our TLS Confnig
 func (e *environment) NewClient() *http.Client {
 	return &http.Client{
 		Transport: &http.Transport{
