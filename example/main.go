@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"time"
@@ -9,6 +10,10 @@ import (
 )
 
 func main() {
+
+	// Let's use the official messages
+	// for events and errors, in English
+	p, _ := bankid.NewMessages("en")
 
 	caTestPath := "../CA/test.crt"
 	rpCrtPath := "../rp/bankid_rp_test.crt" // NOTE: Replace with your RP (Relaying Partner) certificate
@@ -24,6 +29,9 @@ func main() {
 	// Remove non-digits from personal number
 	personalNumber := "198001010109" // NOTE: Replace with a real personal number
 	ipAddr := "127.0.0.1"            // IP of your mobile phone with BankID app on it
+
+	// Print message as instructed by the RP Guidelines v3.2.2
+	fmt.Println(" >> " + p.Msg(bankid.RFA19))
 
 	rsp, err := bankid.Auth(env, personalNumber, ipAddr)
 	if err != nil {
@@ -47,15 +55,19 @@ func main() {
 			switch collectResponse.HintCode {
 			case bankid.PendOutstandingTransaction:
 				{
-					log.Println(" >> Auth has begun")
+					fmt.Println(" >> " + p.Msg(bankid.RFA1))
+				}
+			case bankid.PendNoClient:
+				{
+					fmt.Println(" >> " + p.Msg(bankid.RFA1))
 				}
 			case bankid.PendStarted:
 				{
-					log.Println(" >> App started")
+					fmt.Println(" >> " + p.Msg(bankid.RFA14_B))
 				}
 			case bankid.PendUserSign:
 				{
-					log.Println(" >> User signing")
+					fmt.Println(" >> " + p.Msg(bankid.RFA9))
 				}
 			}
 		case bankid.OrderFailed:
@@ -64,17 +76,17 @@ func main() {
 				switch collectResponse.HintCode {
 				case bankid.FailCancelled:
 					{
-						log.Println(" !! Auth got cancelled")
+						fmt.Println(" >> " + p.Msg(bankid.RFA3))
 						break
 					}
 				case bankid.FailUserCancel:
 					{
-						log.Println(" !! User cancelled auth")
+						fmt.Println(" >> " + p.Msg(bankid.RFA6))
 						break
 					}
 				case bankid.FailExpiredTransaction:
 					{
-						log.Println(" !! Auth took too long")
+						fmt.Println(" >> " + p.Msg(bankid.RFA8))
 						break
 					}
 				}
@@ -83,7 +95,7 @@ func main() {
 			{
 				done = true
 				log.Println(" >> 😎 Auth Complete ")
-				log.Printf("%s signed in!\n", collectResponse.CompletionData.User.Name)
+				log.Printf(" >> %s signed in!\n", collectResponse.CompletionData.User.Name)
 				break
 			}
 		}
@@ -91,8 +103,9 @@ func main() {
 		time.Sleep(2 * time.Second)
 	}
 
-	if collectResponse.Status != bankid.OrderComplete {
-		_, err = bankid.Cancel(env, rsp.OrderRef)
+	// Just to demonstrate cancelling, we'll probably never end up here.
+	if collectResponse.Status == bankid.OrderPending {
+		err = bankid.Cancel(env, rsp.OrderRef)
 		if err != nil {
 			log.Printf(" !! Could not cancel request: %s\n", err.Error())
 		}

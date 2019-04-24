@@ -4,7 +4,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 )
 
@@ -87,16 +86,12 @@ func Collect(env Environmenter, orderRef string) (*CollectResponse, error) {
 }
 
 // Cancel -
-func Cancel(env Environmenter, orderRef string) (*Response, error) {
+func Cancel(env Environmenter, orderRef string) error {
 	requestBody := Request{
 		OrderRef: orderRef,
 	}
-	output := &Response{}
-	rsp, err := call(CancelEndpoint, env, &requestBody, stdResponseParser)
-	if err == nil {
-		output = rsp.(*Response)
-	}
-	return output, err
+	_, err := call(CancelEndpoint, env, &requestBody, stdResponseParser)
+	return err
 }
 
 func call(endpoint string, env Environmenter, requestBody *Request, rspParser responseParser) (interface{}, error) {
@@ -119,14 +114,12 @@ func call(endpoint string, env Environmenter, requestBody *Request, rspParser re
 func stdResponseParser(rsp *http.Response) (interface{}, error) {
 	defer rsp.Body.Close()
 
-	log.Printf("Response code: %s\n", rsp.Status)
-
 	// OK
 	if rsp.StatusCode >= 200 && rsp.StatusCode < 400 {
 		authRsp := Response{}
 		err := json.NewDecoder(rsp.Body).Decode(&authRsp)
 		if err != nil {
-			panic(fmt.Sprintf("failed to parse successful response: %s", err.Error()))
+			panic(fmt.Sprintf(" !! failed to parse successful response: %s", err.Error()))
 		}
 		return &authRsp, nil
 	}
@@ -136,7 +129,7 @@ func stdResponseParser(rsp *http.Response) (interface{}, error) {
 		errRsp := ErrorResponse{}
 		err := json.NewDecoder(rsp.Body).Decode(&errRsp)
 		if err != nil {
-			panic(fmt.Sprintf("failed to parse fail response: %s", err.Error()))
+			panic(fmt.Sprintf(" !! failed to parse fail response: %s", err.Error()))
 		}
 		return nil, errRsp // A bit unorthodox but ErrorResponse is a proper error type
 	}
@@ -148,14 +141,12 @@ func stdResponseParser(rsp *http.Response) (interface{}, error) {
 func collectParser(rsp *http.Response) (interface{}, error) {
 	defer rsp.Body.Close()
 
-	log.Printf("Response code: %s\n", rsp.Status)
-
 	// OK
 	if rsp.StatusCode >= 200 && rsp.StatusCode < 400 {
 		collectRsp := CollectResponse{}
 		err := json.NewDecoder(rsp.Body).Decode(&collectRsp)
 		if err != nil {
-			panic(fmt.Sprintf("failed to parse successful response: %s", err.Error()))
+			panic(fmt.Sprintf(" !! failed to parse successful response: %s", err.Error()))
 		}
 		return &collectRsp, nil
 	}
@@ -165,7 +156,7 @@ func collectParser(rsp *http.Response) (interface{}, error) {
 		errRsp := ErrorResponse{}
 		err := json.NewDecoder(rsp.Body).Decode(&errRsp)
 		if err != nil {
-			panic(fmt.Sprintf("failed to parse fail response: %s", err.Error()))
+			panic(fmt.Sprintf(" !! failed to parse fail response: %s", err.Error()))
 		}
 		return nil, errRsp // A bit unorthodox but ErrorResponse is a proper error type
 	}

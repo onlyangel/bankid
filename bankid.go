@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"strings"
 )
@@ -38,18 +37,18 @@ type environment struct {
 func NewEnvironment(baseURL string, caPath string, rpCertPath string, rpKeyPath string) (*environment, error) {
 	ca, err := ioutil.ReadFile(caPath)
 	if err != nil {
-		return nil, fmt.Errorf("Could not load CA Certificate: %s", err.Error())
+		return nil, fmt.Errorf("could not load CA Certificate: %s", err.Error())
 	}
 
 	rpCert, err := tls.LoadX509KeyPair(rpCertPath, rpKeyPath)
 	if err != nil {
-		return nil, fmt.Errorf("Could not load RP Keypair: %s", err.Error())
+		return nil, fmt.Errorf("could not load RP Keypair: %s", err.Error())
 	}
 
 	caPool := x509.NewCertPool()
 
 	if caPool.AppendCertsFromPEM(ca) == false {
-		return nil, fmt.Errorf("Could not append CA Certificate to pool. Invalid certificate?")
+		return nil, fmt.Errorf("could not append CA Certificate to pool. Invalid certificate?")
 	}
 
 	clientCfg := tls.Config{
@@ -70,8 +69,6 @@ func (e *environment) NewRequest(endpoint string, body interface{}) (*http.Reque
 	if err != nil {
 		return nil, err
 	}
-
-	log.Printf("New request to >> %s << with body: %s\n", endpoint, string(requestBody))
 
 	bodyReader := strings.NewReader(string(requestBody))
 	req, err := http.NewRequest("POST", e.baseURL+APIVersion+endpoint, bodyReader)
