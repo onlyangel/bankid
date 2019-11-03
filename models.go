@@ -62,8 +62,8 @@ type Completion struct {
 	User         User   `json:"user"`
 	Device       Device `json:"device"`
 	Cert         Cert   `json:"cert"`
-	Signature    string `json:"signature"` // base64 encoded signature, see https://www.bankid.com/bankid-i-dina-tjanster/rp-info
-	OCSPResponse string `json:"ocspResponse"`
+	Signature    string `json:"signature,omitempty"` // base64 encoded signature, see https://www.bankid.com/bankid-i-dina-tjanster/rp-info
+	OCSPResponse string `json:"ocspResponse,omitempty"`
 }
 
 type User struct {
