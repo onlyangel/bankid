@@ -6,8 +6,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"strings"
+	"time"
 )
 
 // API Constants
@@ -34,7 +36,7 @@ type environment struct {
 }
 
 // NewEnvironment - sets up the certificates and URLs needed to identify ourselves with the BankID service
-func NewEnvironment(baseURL string, caPath string, rpCertPath string, rpKeyPath string) (*environment, error) {
+func NewEnvironment(baseURL string, caPath string, rpCertPath string, rpKeyPath string) (Environmenter, error) {
 	ca, err := ioutil.ReadFile(caPath)
 	if err != nil {
 		return nil, fmt.Errorf("could not load CA Certificate: %s", err.Error())
@@ -84,7 +86,14 @@ func (e *environment) NewRequest(endpoint string, body interface{}) (*http.Reque
 func (e *environment) NewClient() *http.Client {
 	return &http.Client{
 		Transport: &http.Transport{
-			TLSClientConfig: e.clientConfig,
+			Dial: (&net.Dialer{
+				Timeout:   5 * time.Second,
+				KeepAlive: 30 * time.Second,
+			}).Dial,
+			TLSClientConfig:     e.clientConfig,
+			TLSHandshakeTimeout: 5 * time.Second,
+			IdleConnTimeout:     90 * time.Second,
 		},
+		Timeout: 10 * time.Second,
 	}
 }
