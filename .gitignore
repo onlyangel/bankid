@@ -5,8 +5,8 @@
 service
 vendor/*
 usemodules.sh
-rp/*
+coverage.out
 
 # Temporary ban
-bankid_test.go
+bankid_integration_test.go
 example/example
