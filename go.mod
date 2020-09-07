@@ -1,4 +1,4 @@
-module github.com/jfernstad/bankid
+module github.com/onlyangel/bankid
 
 go 1.12
 

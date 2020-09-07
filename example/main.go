@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/jfernstad/bankid"
+	"github.com/onlyangel/bankid"
 )
 
 func main() {
