@@ -4,12 +4,15 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
+	"encoding/pem"
 	"fmt"
 	"io/ioutil"
 	"net"
 	"net/http"
 	"strings"
 	"time"
+
+	pkcs12 "software.sslmate.com/src/go-pkcs12"
 )
 
 // API Constants
@@ -34,6 +37,52 @@ type environment struct {
 	baseURL      string
 	clientConfig *tls.Config
 }
+
+func NewEnvironmentP12(baseURL string, caPath string, rpP12Path string) (Environmenter, error) {
+	ca, err := ioutil.ReadFile(caPath)
+	if err != nil {
+		return nil, fmt.Errorf("could not load CA Certificate: %s", err.Error())
+	}
+
+	p12bytres, err :=  ioutil.ReadFile(rpP12Path)
+	if err != nil {
+		return nil, fmt.Errorf("could not load p12 certificate: %s", err.Error())
+	}
+
+	blocks, err := pkcs12.ToPEM(p12bytres, "qwerty123")
+	if err != nil {
+		return nil, fmt.Errorf("could not converto to pem: %s", err.Error())
+	}
+
+	var pemData []byte
+	for _, b := range blocks {
+		pemData = append(pemData, pem.EncodeToMemory(b)...)
+	}
+
+	// then use PEM data for tls to construct tls certificate:
+	rpCert, err := tls.X509KeyPair(pemData, pemData)
+	if err != nil {
+		return nil, fmt.Errorf("could not load RP Keypair: %s", err.Error())
+	}
+
+	caPool := x509.NewCertPool()
+
+	if caPool.AppendCertsFromPEM(ca) == false {
+		return nil, fmt.Errorf("could not append CA Certificate to pool. Invalid certificate?")
+	}
+
+	clientCfg := tls.Config{
+		Certificates: []tls.Certificate{rpCert},
+		ClientCAs:    caPool,
+		RootCAs:      caPool,
+		// InsecureSkipVerify: true, // For some reason is BankID not using a proper domain certificate
+	}
+	return &environment{
+		baseURL:      baseURL,
+		clientConfig: &clientCfg,
+	}, nil
+}
+
 
 // NewEnvironment - sets up the certificates and URLs needed to identify ourselves with the BankID service
 func NewEnvironment(baseURL string, caPath string, rpCertPath string, rpKeyPath string) (Environmenter, error) {
