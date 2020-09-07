@@ -10,3 +10,4 @@ coverage.out
 # Temporary ban
 bankid_integration_test.go
 example/example
+.idea
