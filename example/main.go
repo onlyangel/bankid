@@ -16,19 +16,21 @@ func main() {
 	p, _ := bankid.NewMessages("en")
 
 	caTestPath := "../CA/test.crt"
-	rpCrtPath := "../rp/bankid_rp_test.crt" // NOTE: Replace with your RP (Relaying Partner) certificate
-	rpKeyPath := "../rp/bankid_rp_test.key" // NOTE: Replace with your RP key
+	rpP12Path := "../rp/test.p12"
+	//rpCrtPath := "../rp/bankid_rp_test.crt" // NOTE: Replace with your RP (Relaying Partner) certificate
+	//rpKeyPath := "../rp/bankid_rp_test.key" // NOTE: Replace with your RP key
 
 	// bankid.TestBaseURL or bankid.ProductionBaseURL
-	env, err := bankid.NewEnvironment(bankid.TestBaseURL, caTestPath, rpCrtPath, rpKeyPath)
+	//env, err := bankid.NewEnvironment(bankid.TestBaseURL, caTestPath, rpCrtPath, rpKeyPath)
+	env, err := bankid.NewEnvironmentP12(bankid.TestBaseURL, caTestPath, rpP12Path)
 	if err != nil {
 		log.Printf(" !! Could not create TestEnvironment: %s", err.Error())
 		os.Exit(1)
 	}
 
 	// Remove non-digits from personal number
-	personalNumber := "198001010109" // NOTE: Replace with a real personal number
-	ipAddr := "127.0.0.1"            // IP of your mobile phone with BankID app on it
+	personalNumber := "200107091241" // NOTE: Replace with a real personal number
+	ipAddr := "2806:2f0:51c1:abd4:2429:96a4:1ec6:ae82"            // IP of your mobile phone with BankID app on it
 
 	// Print message as instructed by the RP Guidelines v3.2.2
 	fmt.Println(" >> " + p.Msg(bankid.RFA19))
